@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include "scheduler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,12 +55,31 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+void ledRedToggle(void);
+void ledYellowToggle(void);
+void ledGreenToggle(void);
+void ledAquaToggle(void);
+void ledBlueToggle(void);
+void ledPinkToggle(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t temp = 0;
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+//	if(huart->Instance == USART2) {
+//		HAL_UART_Receive_IT(&huart2, &temp, 1);
+//		HAL_UART_Transmit(&huart2, &temp, 1, 50);
+//	}
+	if(huart->Instance == USART1) {
+		HAL_UART_Receive_IT(&huart1, &temp, 1);
+		HAL_UART_Transmit(&huart1, &temp, 1, 50);
+	}
+}
+void timePrint(void) {
+	char str[100];
+	HAL_UART_Transmit(&huart1, (void*)str, sprintf(str, "%lu\r\n", HAL_GetTick()), 10);
+}
 /* USER CODE END 0 */
 
 /**
@@ -94,13 +114,32 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_UART_Receive_IT(&huart1, &temp, 1);
+  SCH_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  /* AddTask testing section BEGIN */
+
+ //  uint8_t task1 = SCH_AddTask(ledRedToggle, 1000, 1000);
+   SCH_AddTask(ledYellowToggle, 0, 500);
+   SCH_AddTask(ledGreenToggle, 0, 1000);
+   SCH_AddTask(ledAquaToggle, 0, 1500);
+   SCH_AddTask(ledBlueToggle, 0, 2000);
+   SCH_AddTask(ledPinkToggle, 0, 2500);
+   SCH_AddTask(timePrint, 0, 1000);
+ //  SCH_AddTask(timePrint, 0, 500);
+
+   /* AddTask testing section END */
+
+   /* DeleteTask testing section BEGIN */
+ //  SCH_DeleteTask(task1);
+   /* DeleteTask testing section END */
   while (1)
   {
+	  SCH_Dispatch();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -205,7 +244,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -254,7 +293,33 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void ledRedToggle(void) {
+	HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+}
 
+void ledYellowToggle(void) {
+	HAL_GPIO_TogglePin(LED_YELLOW_GPIO_Port, LED_YELLOW_Pin);
+}
+
+void ledGreenToggle(void) {
+	HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+}
+
+void ledAquaToggle(void) {
+	HAL_GPIO_TogglePin(LED_AQUA_GPIO_Port, LED_AQUA_Pin);
+}
+
+void ledBlueToggle(void) {
+	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+}
+
+void ledPinkToggle(void) {
+	HAL_GPIO_TogglePin(LED_PINK_GPIO_Port, LED_PINK_Pin);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	SCH_Update();
+}
 /* USER CODE END 4 */
 
 /**
