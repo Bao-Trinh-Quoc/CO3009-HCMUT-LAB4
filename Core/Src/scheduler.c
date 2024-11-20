@@ -38,7 +38,18 @@ void SCH_Update(void) {
 		tasks[0].flag = 1;
 }
 
-void SCH_Dispatch(void) {}
+void SCH_Dispatch(void) {
+	if ((tasks[0].functionPointer == 0) || (tasks[0].flag == 0)) {
+		return;
+	}
+	(*tasks[0].functionPointer)();
+	tasks[0].flag = 0;
+	SCH_Task newTask = tasks[0];
+	SCH_DeleteTask(tasks[0].id);
+	if (newTask.period > 0) {
+		SCH_AddTask(newTask.functionPointer, newTask.period, newTask.period);
+	}
+}
 // Queue mechanism
 uint8_t SCH_AddTask(void (*functionPointer)(void), uint32_t delay, uint32_t period) {
 	// If there is no space left to add a new task
@@ -79,4 +90,23 @@ uint8_t SCH_AddTask(void (*functionPointer)(void), uint32_t delay, uint32_t peri
 	}
 	return SCH_TASKNUMBER;
 }
-unsigned char SCH_DeleteTask(uint8_t id) {}
+unsigned char SCH_DeleteTask(uint8_t id) {
+	for (uint8_t i = 0; i < SCH_TASKNUMBER; i++) {
+		if (tasks[i].id == id) {
+			uint8_t currentID = tasks[i].id;
+			if (tasks[i + 1].functionPointer != 0) {
+				tasks[i + 1].delay += tasks[i].delay;
+			}
+            for (uint8_t j = i; j < SCH_TASKNUMBER - 1; j ++) {
+                tasks[j] = tasks[j + 1];
+            }
+            tasks[SCH_TASKNUMBER - 1].functionPointer = 0;
+            tasks[SCH_TASKNUMBER - 1].id = currentID;
+            tasks[SCH_TASKNUMBER - 1].delay = 0;
+            tasks[SCH_TASKNUMBER - 1].period = 0;
+            tasks[SCH_TASKNUMBER - 1].flag = 0;
+            return 1;
+		}
+	}
+	return 0;
+}
