@@ -17,7 +17,7 @@
 typedef struct {
 	void (*functionPointer)(void);
 	uint8_t id;
-	uint32_t time_delay;
+	uint32_t delay;
 	uint32_t period;
 	unsigned char flag;
 } SCH_Task;
